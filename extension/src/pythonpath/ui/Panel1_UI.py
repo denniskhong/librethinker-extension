@@ -67,7 +67,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.Prompt.PositionX = dialogLeftPadding
         self.Prompt.PositionY = "8"
         self.Prompt.Width = 136
-        self.Prompt.Height = 104
+        self.Prompt.Height = 50
         self.Prompt.Text = "Type your prompt here"
         self.Prompt.MultiLine = True
         self.Prompt.VerticalAlign = "TOP"
@@ -84,7 +84,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.Submit.Name = "Submit"
         self.Submit.TabIndex = self.Prompt.TabIndex + 1
         self.Submit.PositionX = dialogLeftPadding
-        self.Submit.PositionY = "120"
+        self.Submit.PositionY = "66"
         self.Submit.Width = 64
         self.Submit.Height = 23
         self.Submit.Label = "Submit"
@@ -104,7 +104,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.SelectedTextOption.Name = "SelectedText"
         self.SelectedTextOption.TabIndex = self.Submit.TabIndex + 1
         self.SelectedTextOption.PositionX = "82"
-        self.SelectedTextOption.PositionY = "124"
+        self.SelectedTextOption.PositionY = "70"
         self.SelectedTextOption.Width = 64
         self.SelectedTextOption.Height = 10
         self.SelectedTextOption.Label = "Selected text"
@@ -121,7 +121,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.EntireDocumentOption.Name = "EntireDocument"
         self.EntireDocumentOption.TabIndex = self.SelectedTextOption.TabIndex + 1
         self.EntireDocumentOption.PositionX = "82"
-        self.EntireDocumentOption.PositionY = "135"
+        self.EntireDocumentOption.PositionY = "81"
         self.EntireDocumentOption.Width = 64
         self.EntireDocumentOption.Height = 10
         self.EntireDocumentOption.Label = "Entire document"
