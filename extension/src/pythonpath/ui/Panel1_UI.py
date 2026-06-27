@@ -261,7 +261,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
         self.GetHelp.Width = 30
         self.GetHelp.Height = 10
         self.GetHelp.Label = "Get Help"
-        self.GetHelp.URL = "https://tally.so/r/jaZx41"
+        self.GetHelp.URL = "https://github.com/denniskhong/librethinker-extension"
 
         self.DialogModel.insertByName("GetHelp", self.GetHelp)
 
@@ -273,9 +273,9 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
         self.BuyMeCoffee.PositionX = dialogLeftPadding + 30
         self.BuyMeCoffee.PositionY = self.LinksSectionHeading.PositionY + 15
         self.BuyMeCoffee.TabIndex = self.GetHelp.TabIndex + 1
-        self.BuyMeCoffee.Width = 45
+        self.BuyMeCoffee.Width = 136
         self.BuyMeCoffee.Height = 10
-        self.BuyMeCoffee.Label = "Buy Me A Coffee"
+        self.BuyMeCoffee.Label = "Buy Me A Coffee (Mihail Marian)"
         self.BuyMeCoffee.URL = "https://ko-fi.com/mihailmarian"
 
         self.DialogModel.insertByName("BuyMeCoffee", self.BuyMeCoffee)

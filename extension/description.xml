@@ -26,7 +26,7 @@ Tip: When edited open file in browser to check for errors.
     <platform value="all" />
 
     <publisher>
-        <name xlink:href="https://librethinker.com">Tuxedo Software Limited</name>
+        <name xlink:href="https://github.com/denniskhong/librethinker-extension">Dennis Khong</name>
     </publisher>
 
     <!--
