@@ -1,4 +1,4 @@
-# LibreThinker
+# LibreThinker (denniskhong edition)
 
 LibreThinker is a LibreOffice Writer extension that brings AI-assisted text 
 editing directly into your sidebar. It integrates an LLM to help you rewrite, improve, 
