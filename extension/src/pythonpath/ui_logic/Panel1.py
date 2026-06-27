@@ -44,9 +44,9 @@ from com.sun.star.awt.MessageBoxType import (
 from com.sun.star.beans import PropertyValue
 
 try:
-    from ui.Panel1_UI import Panel1_UI
+    from ui.Panel1_UI import Panel1_UI, PROMPT_PLACEHOLDER, PROMPT_NAME_PLACEHOLDER
 except ImportError:
-    from pythonpath.ui.Panel1_UI import Panel1_UI
+    from pythonpath.ui.Panel1_UI import Panel1_UI, PROMPT_PLACEHOLDER, PROMPT_NAME_PLACEHOLDER
 
 from .prompt_manager import PromptManager
 
@@ -352,8 +352,8 @@ class Panel1(Panel1_UI):
 
     def NewPrompt_OnClick(self):
         """Clears the canvas for a new entry."""
-        self.DialogContainer.getControl("PromptName").setText("")
-        self.DialogContainer.getControl("Prompt").setText("")
+        self.DialogContainer.getControl("PromptName").setText(PROMPT_NAME_PLACEHOLDER)
+        self.DialogContainer.getControl("Prompt").setText(PROMPT_PLACEHOLDER)
         self.DialogContainer.getControl("PromptDropdown").setText("Select a saved prompt...")
         self.StatusText.Label = "Ready for a new prompt."
 
