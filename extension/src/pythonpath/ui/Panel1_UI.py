@@ -19,9 +19,13 @@ from com.sun.star.awt import XActionListener
 from com.sun.star.awt import XWindowListener
 from com.sun.star.task import XJobExecutor
 from ui_logic.settings import Settings
+from com.sun.star.awt import XActionListener, XItemListener, XWindowListener, XFocusListener
 
+# Placeholder constants
+PROMPT_PLACEHOLDER = "Type your prompt here"
+PROMPT_NAME_PLACEHOLDER = "Prompt name"
 
-class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
+class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, XWindowListener, XJobExecutor):
     """
     Class documentation...
     """
@@ -57,6 +61,80 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
 
         dialogLeftPadding = 6
 
+        # Layout constants
+        BUTTON_HEIGHT = 18
+        SMALL_BUTTON_WIDTH = 43
+        BUTTON_GAP = 4
+
+        # Button colour constants
+        COLOR_BUTTON_DEFAULT = 0xF0F0F0
+        COLOR_BUTTON_PRIMARY = 0xDDEEFF     # Light blue
+        COLOR_BUTTON_SAVE = 0xE8F5E9        # Light green
+        COLOR_BUTTON_DELETE = 0xFFE0E0      # Light red
+        COLOR_BUTTON_SETTINGS = 0xFFF8E1    # Light yellow
+
+        # --------- NEW: Prompt Selection Dropdown ---------
+        self.PromptDropdown = self.DialogModel.createInstance("com.sun.star.awt.UnoControlComboBoxModel")
+        self.PromptDropdown.Dropdown = True
+        self.PromptDropdown.Name = "PromptDropdown"
+        self.PromptDropdown.PositionX = dialogLeftPadding
+        self.PromptDropdown.PositionY = 8
+        self.PromptDropdown.Width = 136
+        self.PromptDropdown.Height = 15
+        self.PromptDropdown.Text = "Select a saved prompt..."
+        self.DialogModel.insertByName("PromptDropdown", self.PromptDropdown)
+        
+        # Add item listener to detect dropdown selection
+        self.DialogContainer.getControl("PromptDropdown").addItemListener(self)
+
+        # --------- Prompt Management Buttons ---------
+        self.NewPrompt = self.DialogModel.createInstance("com.sun.star.awt.UnoControlButtonModel")
+        self.NewPrompt.Name = "NewPrompt"
+        self.NewPrompt.PositionX = dialogLeftPadding
+        self.NewPrompt.PositionY = self.PromptDropdown.PositionY + 20
+        self.NewPrompt.Width = SMALL_BUTTON_WIDTH
+        self.NewPrompt.Height = BUTTON_HEIGHT
+        self.NewPrompt.BackgroundColor = COLOR_BUTTON_PRIMARY
+        self.NewPrompt.Label = "New Prompt"
+        self.DialogModel.insertByName("NewPrompt", self.NewPrompt)
+        self.DialogContainer.getControl("NewPrompt").addActionListener(self)
+        self.DialogContainer.getControl("NewPrompt").setActionCommand("NewPrompt_OnClick")
+
+        self.SavePrompt = self.DialogModel.createInstance("com.sun.star.awt.UnoControlButtonModel")
+        self.SavePrompt.Name = "SavePrompt"
+        self.SavePrompt.PositionX = dialogLeftPadding + SMALL_BUTTON_WIDTH + BUTTON_GAP
+        self.SavePrompt.PositionY = self.NewPrompt.PositionY
+        self.SavePrompt.Width = SMALL_BUTTON_WIDTH
+        self.SavePrompt.Height = BUTTON_HEIGHT
+        self.SavePrompt.BackgroundColor = COLOR_BUTTON_SAVE
+        self.SavePrompt.Label = "Save Prompt"
+        self.DialogModel.insertByName("SavePrompt", self.SavePrompt)
+        self.DialogContainer.getControl("SavePrompt").addActionListener(self)
+        self.DialogContainer.getControl("SavePrompt").setActionCommand("SavePrompt_OnClick")
+
+        self.DeletePrompt = self.DialogModel.createInstance("com.sun.star.awt.UnoControlButtonModel")
+        self.DeletePrompt.Name = "DeletePrompt"
+        self.DeletePrompt.PositionX = dialogLeftPadding + (SMALL_BUTTON_WIDTH + BUTTON_GAP) * 2
+        self.DeletePrompt.PositionY = self.NewPrompt.PositionY
+        self.DeletePrompt.Width = SMALL_BUTTON_WIDTH
+        self.DeletePrompt.Height = BUTTON_HEIGHT
+        self.DeletePrompt.BackgroundColor = COLOR_BUTTON_DELETE
+        self.DeletePrompt.Label = "Delete"
+        self.DialogModel.insertByName("DeletePrompt", self.DeletePrompt)
+        self.DialogContainer.getControl("DeletePrompt").addActionListener(self)
+        self.DialogContainer.getControl("DeletePrompt").setActionCommand("DeletePrompt_OnClick")
+
+        # --------- Prompt Name Field ---------
+        self.PromptName = self.DialogModel.createInstance("com.sun.star.awt.UnoControlEditModel")
+        self.PromptName.Name = "PromptName"
+        self.PromptName.PositionX = dialogLeftPadding
+        self.PromptName.PositionY = self.NewPrompt.PositionY + 24
+        self.PromptName.Width = 136
+        self.PromptName.Height = 15
+        self.PromptName.Text = PROMPT_NAME_PLACEHOLDER
+        self.DialogModel.insertByName("PromptName", self.PromptName)
+        self.DialogContainer.getControl("PromptName").addFocusListener(self)
+
         # --------- create an instance of Edit control, set properties ---
         self.Prompt = self.DialogModel.createInstance(
             "com.sun.star.awt.UnoControlEditModel"
@@ -65,16 +143,17 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.Prompt.Name = "Prompt"
         self.Prompt.TabIndex = 0
         self.Prompt.PositionX = dialogLeftPadding
-        self.Prompt.PositionY = "8"
+        self.Prompt.PositionY = self.PromptName.PositionY + 20
         self.Prompt.Width = 136
         self.Prompt.Height = 50
-        self.Prompt.Text = "Type your prompt here"
+        self.Prompt.Text = PROMPT_PLACEHOLDER
         self.Prompt.MultiLine = True
         self.Prompt.VerticalAlign = "TOP"
         self.Prompt.AutoVScroll = True
 
         # inserts the control model into the dialog model
         self.DialogModel.insertByName("Prompt", self.Prompt)
+        self.DialogContainer.getControl("Prompt").addFocusListener(self)
 
         # --------- create an instance of Button control, set properties ---
         self.Submit = self.DialogModel.createInstance(
@@ -84,9 +163,10 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.Submit.Name = "Submit"
         self.Submit.TabIndex = self.Prompt.TabIndex + 1
         self.Submit.PositionX = dialogLeftPadding
-        self.Submit.PositionY = "66"
+        self.Submit.PositionY = self.Prompt.PositionY + 58
         self.Submit.Width = 64
-        self.Submit.Height = 23
+        self.Submit.Height = BUTTON_HEIGHT
+        self.Submit.BackgroundColor = COLOR_BUTTON_PRIMARY
         self.Submit.Label = "Submit"
 
         # inserts the control model into the dialog model
@@ -104,10 +184,10 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.SelectedTextOption.Name = "SelectedText"
         self.SelectedTextOption.TabIndex = self.Submit.TabIndex + 1
         self.SelectedTextOption.PositionX = "82"
-        self.SelectedTextOption.PositionY = "70"
+        self.SelectedTextOption.PositionY = self.Submit.PositionY + 4
         self.SelectedTextOption.Width = 64
         self.SelectedTextOption.Height = 10
-        self.SelectedTextOption.Label = "Selected text"
+        self.SelectedTextOption.Label = "Selected Text"
         self.SelectedTextOption.State = True
 
         # inserts the control model into the dialog model
@@ -121,14 +201,14 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.EntireDocumentOption.Name = "EntireDocument"
         self.EntireDocumentOption.TabIndex = self.SelectedTextOption.TabIndex + 1
         self.EntireDocumentOption.PositionX = "82"
-        self.EntireDocumentOption.PositionY = "81"
+        self.EntireDocumentOption.PositionY = self.SelectedTextOption.PositionY + 11
         self.EntireDocumentOption.Width = 64
         self.EntireDocumentOption.Height = 10
-        self.EntireDocumentOption.Label = "Entire document"
+        self.EntireDocumentOption.Label = "Entire Document"
 
         # inserts the control model into the dialog model
         self.DialogModel.insertByName("EntireDocumentOption", self.EntireDocumentOption)
-        
+
         # --------- NEW: Model Output Textbox ---------
         self.ModelOutputBox = self.DialogModel.createInstance(
             "com.sun.star.awt.UnoControlEditModel"
@@ -145,34 +225,12 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
 
         self.DialogModel.insertByName("ModelOutputBox", self.ModelOutputBox)
 
-        # --------- create an instance of Button control, set properties ---
-        self.SavePrompt = self.DialogModel.createInstance(
-            "com.sun.star.awt.UnoControlButtonModel"
-        )
-
-        self.SavePrompt.Name = "SavePrompt"
-        self.SavePrompt.TabIndex = self.EntireDocumentOption.TabIndex + 1
-        self.SavePrompt.PositionX = dialogLeftPadding
-        self.SavePrompt.PositionY = "146"
-        self.SavePrompt.Width = 64
-        self.SavePrompt.Height = 14
-        self.SavePrompt.Label = "Save prompt"
-
-        # inserts the control model into the dialog model
-        self.DialogModel.insertByName("SavePrompt", self.SavePrompt)
-
-        # add the action listener
-        self.DialogContainer.getControl("SavePrompt").addActionListener(self)
-        self.DialogContainer.getControl("SavePrompt").setActionCommand(
-            "SavePrompt_OnClick"
-        )
-
         self.StatusText = self.DialogModel.createInstance(
             "com.sun.star.awt.UnoControlFixedTextModel"
         )
         self.StatusText.Name = "StatusText"
         self.StatusText.PositionX = dialogLeftPadding
-        self.StatusText.PositionY = self.ModelOutputBox.PositionY + 90 # Anchored below the new textbox
+        self.StatusText.PositionY = self.ModelOutputBox.PositionY + 112 # Anchored below the new textbox
         self.StatusText.Width = 136
         self.StatusText.Height = 30
         self.StatusText.Label = ""
@@ -188,7 +246,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.LinksSectionHeading.PositionY = self.StatusText.PositionY + 30
         self.LinksSectionHeading.Width = 136
         self.LinksSectionHeading.Height = 10
-        self.LinksSectionHeading.Label = "--LINKS--"
+        self.LinksSectionHeading.Label = "Links"
 
         self.DialogModel.insertByName("LinksSectionHeading", self.LinksSectionHeading)
 
@@ -230,7 +288,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.SettingsSectionHeading.PositionY = self.GetHelp.PositionY + 20
         self.SettingsSectionHeading.Width = 136
         self.SettingsSectionHeading.Height = 10
-        self.SettingsSectionHeading.Label = "--BYOK/OLLAMA SETTINGS--"
+        self.SettingsSectionHeading.Label = "BYOK / Ollama Settings"
 
         self.DialogModel.insertByName(
             "SettingsSectionHeading", self.SettingsSectionHeading
@@ -245,7 +303,8 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.GetOllamaModels.PositionX = dialogLeftPadding
         self.GetOllamaModels.PositionY = self.SettingsSectionHeading.PositionY + 15
         self.GetOllamaModels.Width = 100
-        self.GetOllamaModels.Height = 23
+        self.GetOllamaModels.Height = BUTTON_HEIGHT
+        self.GetOllamaModels.BackgroundColor = COLOR_BUTTON_SETTINGS
         self.GetOllamaModels.Label = "Get Ollama Models"
 
         self.DialogModel.insertByName("GetOllamaModels", self.GetOllamaModels)
@@ -350,7 +409,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.ModelOutputInLabel.PositionY = self.ModelApiKey.PositionY + 20
         self.ModelOutputInLabel.Width = 136
         self.ModelOutputInLabel.Height = 10
-        self.ModelOutputInLabel.Label = "Model Output In:"
+        self.ModelOutputInLabel.Label = "Output Destination:"
 
         self.DialogModel.insertByName("ModelOutputInLabel", self.ModelOutputInLabel)
 
@@ -378,8 +437,9 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         self.SaveSettings.PositionX = dialogLeftPadding
         self.SaveSettings.PositionY = self.ModelOutputIn.PositionY + 25 # Anchored to the new dropdown
         self.SaveSettings.Width = 64
-        self.SaveSettings.Height = 23
-        self.SaveSettings.Label = "Save settings"
+        self.SaveSettings.Height = BUTTON_HEIGHT
+        self.SaveSettings.BackgroundColor = COLOR_BUTTON_SAVE
+        self.SaveSettings.Label = "Save Settings"
 
         # inserts the control model into the dialog model
         self.DialogModel.insertByName("SaveSettings", self.SaveSettings)
@@ -424,6 +484,36 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
         if oActionEvent.ActionCommand == "GetOllamaModels_OnClick":
             self.GetOllamaModels_OnClick()
 
+        if oActionEvent.ActionCommand == "NewPrompt_OnClick":
+            self.NewPrompt_OnClick()
+
+        if oActionEvent.ActionCommand == "DeletePrompt_OnClick":
+            self.DeletePrompt_OnClick()
+
+    def focusGained(self, event):
+        control = event.Source
+        control_name = control.Model.Name
+
+        if control_name == "Prompt":
+            if control.getText() == PROMPT_PLACEHOLDER:
+                control.setText("")
+
+        elif control_name == "PromptName":
+            if control.getText() == PROMPT_NAME_PLACEHOLDER:
+                control.setText("")
+
+    def focusLost(self, event):
+        control = event.Source
+        control_name = control.Model.Name
+
+        if control_name == "Prompt":
+            if control.getText().strip() == "":
+                control.setText(PROMPT_PLACEHOLDER)
+
+        elif control_name == "PromptName":
+            if control.getText().strip() == "":
+                control.setText(PROMPT_NAME_PLACEHOLDER)
+
     # -----------------------------------------------------------
     #               Window (dialog/panel) events
     # -----------------------------------------------------------
@@ -431,6 +521,18 @@ class Panel1_UI(unohelper.Base, XActionListener, XWindowListener, XJobExecutor):
     def windowResized(self, oWindowEvent):
         # print(dir(oWindowEvent.Source))
         self.resizeControls(dialog=oWindowEvent.Source)
+
+    def disposing(self, event):
+        pass
+
+    def windowMoved(self, event):
+        pass
+
+    def windowShown(self, event):
+        pass
+
+    def windowHidden(self, event):
+        pass
 
 
 # ----------------- END GENERATED CODE ----------------------------------------

@@ -48,6 +48,8 @@ try:
 except ImportError:
     from pythonpath.ui.Panel1_UI import Panel1_UI
 
+from .prompt_manager import PromptManager
+
 # -------------------------------------
 # HELPERS FOR MRI AND  XRAY
 # -------------------------------------
@@ -91,9 +93,11 @@ class Panel1(Panel1_UI):
             self.dialog = dialog
 
             self.settings = Settings(ctx)
+            self.prompt_manager = PromptManager(ctx)
             Panel1_UI.__init__(
                 self, ctx=self.ctx, dialog=self.dialog, settings=self.settings
             )
+            self._refresh_prompt_dropdown()
 
         except Exception as e:
             self.messageBox(
@@ -120,6 +124,16 @@ class Panel1(Panel1_UI):
         si = sm.createInstanceWithContext("com.sun.star.awt.Toolkit", self.ctx)
         mBox = si.createMessageBox(self.Toolkit, MsgType, MsgButtons, MsgTitle, MsgText)
         mBox.execute()
+
+    def showPanel(self):
+        """
+        Show the UI when it is embedded in the LibreOffice sidebar.
+
+        Do not call execute() here, because the sidebar panel is already
+        hosted by LibreOffice. execute() is only for standalone dialogs.
+        """
+        self.DialogContainer.setVisible(True)
+
 
     # -----------------------------------------------------------
     #               Execute dialog
@@ -317,10 +331,55 @@ class Panel1(Panel1_UI):
         label = f"Done. Generated with Ollama model {model}."
         return Response(answer=answer.response, label=label)
 
+    def _refresh_prompt_dropdown(self):
+        """Helper to refill the dropdown menu."""
+        dropdown = self.DialogContainer.getControl("PromptDropdown")
+        dropdown.removeItems(0, dropdown.getItemCount())
+        prompts = self.prompt_manager.get_prompt_list()
+        if prompts:
+            dropdown.addItems(tuple(prompts), 0)
+
+    def itemStateChanged(self, oItemEvent):
+        """Fires when a user selects a prompt from the dropdown."""
+        dropdown = self.DialogContainer.getControl("PromptDropdown")
+        selected_name = dropdown.getText()
+        
+        if selected_name in self.prompt_manager.prompts:
+            # Populate the text fields with the saved data
+            self.DialogContainer.getControl("PromptName").setText(selected_name)
+            self.DialogContainer.getControl("Prompt").setText(self.prompt_manager.prompts[selected_name])
+            self.StatusText.Label = f"Loaded '{selected_name}'"
+
+    def NewPrompt_OnClick(self):
+        """Clears the canvas for a new entry."""
+        self.DialogContainer.getControl("PromptName").setText("")
+        self.DialogContainer.getControl("Prompt").setText("")
+        self.DialogContainer.getControl("PromptDropdown").setText("Select a saved prompt...")
+        self.StatusText.Label = "Ready for a new prompt."
+
+    def DeletePrompt_OnClick(self):
+        """Deletes the currently displayed prompt."""
+        name = self.DialogContainer.getControl("PromptName").getText()
+        if self.prompt_manager.delete_prompt(name):
+            self.NewPrompt_OnClick() # Clear the canvas
+            self._refresh_prompt_dropdown()
+            self.StatusText.Label = "Prompt deleted."
+        else:
+            self.StatusText.Label = "Cannot delete: Prompt not found."
+
     def SavePrompt_OnClick(self):
+        """Saves or updates the prompt using the auto-naming fallback."""
         try:
+            name = self.DialogContainer.getControl("PromptName").getText()
             prompt = self.DialogContainer.getControl("Prompt").getText()
-            self.settings.savePrompt(prompt)
+            
+            final_name = self.prompt_manager.save_prompt(name, prompt)
+            
+            # Update the UI to reflect the actual saved name (in case fallback was used)
+            self.DialogContainer.getControl("PromptName").setText(final_name)
+            self._refresh_prompt_dropdown()
+            self.DialogContainer.getControl("PromptDropdown").setText(final_name)
+            
             self.StatusText.Label = "Prompt saved."
         except Exception as e:
             self.messageBox(f"Error saving prompt: {str(e)}", "Error", ERRORBOX)

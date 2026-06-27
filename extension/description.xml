@@ -21,7 +21,7 @@ Tip: When edited open file in browser to check for errors.
     -->
     <identifier value="org.librethinker.LibreThinkerExtension.denniskhong" />
 
-    <version value="0.2.16-denniskhong.1" />
+    <version value="0.2.16-denniskhong.2" />
 
     <platform value="all" />
 

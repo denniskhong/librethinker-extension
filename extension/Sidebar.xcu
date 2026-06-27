@@ -11,7 +11,7 @@
 	
 			<node oor:name="LibreThinker" oor:op="replace">
 	    	    <prop oor:name="Title" oor:type="xs:string">
-            	   	<value xml:lang="en-US">LibreThinker</value>
+            	   	<value xml:lang="en-US">LibreThinker (denniskhong Edition)</value>
 	            </prop>
 	            <prop oor:name="TitleBarIsOptional" oor:type="xs:boolean">
 			        <value>true</value>
@@ -20,7 +20,7 @@
 	               	<value>LibreThinkerDeck</value>
 	            </prop>
 	            <prop oor:name="IconURL" oor:type="xs:string">
-	               	<value>vnd.sun.star.extension://org.librethinker.LibreThinkerExtension/image/icon.png</value>
+	               	<value>vnd.sun.star.extension://org.librethinker.LibreThinkerExtension.denniskhong/image/icon.png</value>
 	            </prop>				
 		       	<prop oor:name="ContextList">
 	           		<value oor:separator=";">
@@ -30,12 +30,13 @@
 	       	</node>
 	    </node>
     	<node oor:name="PanelList">
-        	
-        	﻿
             <node oor:name="Panel_Panel1" oor:op="replace">
 	        	<prop oor:name="Title" oor:type="xs:string">
-                	<value xml:lang="en-US">Main panel</value>
+                	<value xml:lang="en-US"></value>
             	</prop>
+                <prop oor:name="TitleBarIsOptional" oor:type="xs:boolean">
+                        <value>true</value>
+                    </prop>
             	<prop oor:name="Id" oor:type="xs:string">
                 	<value>Panel_panel0001</value>
             	</prop>
@@ -60,9 +61,6 @@
           			<value>org.librethinker:Panel1</value>
         		</prop>
             </node>
-
-
-
     	</node>
     </node>
 </oor:component-data>

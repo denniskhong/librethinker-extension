@@ -118,7 +118,7 @@ class XUIPanel(unohelper.Base, XSidebarPanel, XUIElement, XToolPanel, XComponent
     def getRealInterface(self):
 
         if not self.window:
-            dialogUrl = "vnd.sun.star.extension://org.librethinker.LibreThinkerExtension/empty_dialog.xdl"
+            dialogUrl = "vnd.sun.star.extension://org.librethinker.LibreThinkerExtension.denniskhong/empty_dialog.xdl"
             # smgr = self.ctx.ServiceManager
 
             provider = self.ctx.ServiceManager.createInstanceWithContext(
@@ -257,17 +257,19 @@ g_ImplementationHelper.addImplementation(*test.get_imple())
 def showPanels(panelWin, url):
     """
     Create a new panel object when the sidebar is initialized
-    or whenever a panel becomes visible
+    or whenever a panel becomes visible.
     """
-
     ctx = uno.getComponentContext()
+
     # url is set in Sidebar.xcu
     if url == "private:resource/toolpanel/LibreThinkerExtension/Panel1":
-
         pos_y = 20
 
-        app = Panel1(context=ctx, dialog=panelWin)
-        app.showDialog()
-        panel_height = app.getHeight()
+        # Use ctx=ctx, not context=ctx
+        app = Panel1(ctx=ctx, dialog=panelWin)
 
+        # Important: sidebar panels should not call execute()
+        app.showPanel()
+
+        panel_height = app.getHeight()
         return panel_height + pos_y
