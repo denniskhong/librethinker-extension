@@ -50,6 +50,27 @@ except ImportError:
 
 from .prompt_manager import PromptManager
 
+from com.sun.star.awt import XActionListener
+
+class WorkflowDialogListener(unohelper.Base, XActionListener):
+    """Listens to button clicks inside the Import/Export dialog."""
+    def __init__(self, parent_panel, dialog):
+        self.parent = parent_panel
+        self.dialog = dialog
+
+    def actionPerformed(self, event):
+        cmd = event.ActionCommand
+        if cmd == "Import":
+            self.parent._execute_import()
+            self.dialog.endExecute()
+        elif cmd == "Export":
+            self.parent._execute_export()
+            self.dialog.endExecute()
+        elif cmd == "Guide":
+            self.parent._show_format_guide()
+        elif cmd == "Cancel":
+            self.dialog.endExecute()
+
 # -------------------------------------
 # HELPERS FOR MRI AND  XRAY
 # -------------------------------------
@@ -196,12 +217,25 @@ class Panel1(Panel1_UI):
             if self.Submit.Enabled is False:
                 return
 
-            # Needs to be here as get_all_txt() refreshes the Submit button state
-            docText = (
-                self.get_all_txt()
-                if self.EntireDocumentOption.State
-                else self.get_selected_txt()
-            )
+            # Grab the live UI control for the Selected Text option
+            selected_text_ctrl = self.DialogContainer.getControl("SelectedTextOption")
+            
+            # Explicitly check if the State integer equals 1 (checked)
+            if selected_text_ctrl.State == 1:
+                docText = self.get_selected_txt()
+                # Check if the selection text is actually empty (nothing was highlighted)
+                if not docText or docText.strip() == "":
+                    self.messageBox(
+                        "No text is currently selected. Please highlight some text in your document first, or choose 'Entire Document'.", 
+                        "Selection Empty", 
+                        WARNINGBOX
+                    )
+                    self.Submit.Enabled = True
+                    self.StatusText.Label = ""
+                    return
+            else:
+                # If Selected Text is NOT checked, default to grabbing the entire document
+                docText = self.get_all_txt()
 
             self.Submit.Enabled = False
             self.StatusText.Label = "Loading..."
@@ -282,7 +316,7 @@ class Panel1(Panel1_UI):
     def server_response(
         self, inputPrompt: str, docText: str, model: str, apiKey: str
     ) -> Response:
-        extensionVersion = "0.2.16"
+        extensionVersion = "0.2.16-dk.3"
 
         client = LtClient(extensionVersion=extensionVersion)
         answer = client.getAnswer(
@@ -332,34 +366,40 @@ class Panel1(Panel1_UI):
         return Response(answer=answer.response, label=label)
 
     def _refresh_prompt_dropdown(self):
-        """Helper to refill the dropdown menu."""
-        dropdown = self.DialogContainer.getControl("PromptDropdown")
+        """Helper to refill the dropdown menu, sorted alphabetically."""
+        dropdown = self.DialogContainer.getControl("PromptNameCombo")
         dropdown.removeItems(0, dropdown.getItemCount())
         prompts = self.prompt_manager.get_prompt_list()
-        if prompts:
-            dropdown.addItems(tuple(prompts), 0)
+
+        # Sort case-insensitive
+        sorted_prompts = sorted(prompts, key=str.lower)
+        if sorted_prompts:
+            dropdown.addItems(tuple(sorted_prompts), 0)
 
     def itemStateChanged(self, oItemEvent):
         """Fires when a user selects a prompt from the dropdown."""
-        dropdown = self.DialogContainer.getControl("PromptDropdown")
+        dropdown = self.DialogContainer.getControl("PromptNameCombo")
         selected_name = dropdown.getText()
         
         if selected_name in self.prompt_manager.prompts:
-            # Populate the text fields with the saved data
-            self.DialogContainer.getControl("PromptName").setText(selected_name)
+            # Populate the main text area with the saved data
             self.DialogContainer.getControl("Prompt").setText(self.prompt_manager.prompts[selected_name])
             self.StatusText.Label = f"Loaded '{selected_name}'"
 
     def NewPrompt_OnClick(self):
         """Clears the canvas for a new entry."""
-        self.DialogContainer.getControl("PromptName").setText(PROMPT_NAME_PLACEHOLDER)
+        combo = self.DialogContainer.getControl("PromptNameCombo")
+        combo.setText(PROMPT_NAME_PLACEHOLDER)
+        
         self.DialogContainer.getControl("Prompt").setText(PROMPT_PLACEHOLDER)
-        self.DialogContainer.getControl("PromptDropdown").setText("Select a saved prompt...")
         self.StatusText.Label = "Ready for a new prompt."
+        
+        # Push focus to the combo box so they can type immediately
+        combo.setFocus()
 
     def DeletePrompt_OnClick(self):
         """Deletes the currently displayed prompt."""
-        name = self.DialogContainer.getControl("PromptName").getText()
+        name = self.DialogContainer.getControl("PromptNameCombo").getText()
         if self.prompt_manager.delete_prompt(name):
             self.NewPrompt_OnClick() # Clear the canvas
             self._refresh_prompt_dropdown()
@@ -367,18 +407,110 @@ class Panel1(Panel1_UI):
         else:
             self.StatusText.Label = "Cannot delete: Prompt not found."
 
+    def ImportExportPrompts_OnClick(self):
+        """Builds and launches the secondary workflow dialog for Import/Export."""
+        smgr = self.ctx.ServiceManager
+        dialog_model = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", self.ctx)
+        dialog_model.PositionX = 150
+        dialog_model.PositionY = 150
+        dialog_model.Width = 120
+        dialog_model.Height = 85
+        dialog_model.Title = "Import/Export Prompts"
+
+        dialog = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", self.ctx)
+        dialog.setModel(dialog_model)
+        
+        listener = WorkflowDialogListener(self, dialog)
+
+        # Helper to create buttons
+        def add_btn(name, label, y_pos, cmd):
+            btn = dialog_model.createInstance("com.sun.star.awt.UnoControlButtonModel")
+            btn.Name = name
+            btn.PositionX = 10
+            btn.PositionY = y_pos
+            btn.Width = 100
+            btn.Height = 14
+            btn.Label = label
+            dialog_model.insertByName(name, btn)
+            control = dialog.getControl(name)
+            control.addActionListener(listener)
+            control.setActionCommand(cmd)
+
+        add_btn("BtnImport", "Import Prompts...", 10, "Import")
+        add_btn("BtnExport", "Export All Prompts...", 28, "Export")
+        add_btn("BtnGuide", "Format Guide", 46, "Guide")
+        add_btn("BtnCancel", "Cancel", 64, "Cancel")
+
+        dialog.createPeer(self.Toolkit, None)
+        dialog.execute()
+        dialog.dispose()
+
+    def _execute_import(self):
+        try:
+            file_picker = self.ctx.ServiceManager.createInstanceWithContext(
+                "com.sun.star.ui.dialogs.FilePicker", self.ctx
+            )
+            file_picker.initialize((uno.getConstantByName("com.sun.star.ui.dialogs.TemplateDescription.FILEOPEN_SIMPLE"),))
+            file_picker.appendFilter("Supported Formats (*.json, *.md, *.yaml)", "*.json;*.md;*.yaml;*.yml")
+
+            if file_picker.execute() == 1:
+                selected_files = file_picker.getFiles()
+                if selected_files:
+                    system_path = uno.fileUrlToSystemPath(selected_files[0])
+                    imported, skipped = self.prompt_manager.import_prompts(system_path)
+                    
+                    self._refresh_prompt_dropdown()
+                    self.messageBox(f"Import complete.\n\nAdded/Updated: {imported}\nExact duplicates skipped: {skipped}", "Import Complete", INFOBOX)
+        except Exception as e:
+            self.messageBox(f"Import failed: {str(e)}", "Error", ERRORBOX)
+
+    def _execute_export(self):
+        try:
+            file_picker = self.ctx.ServiceManager.createInstanceWithContext(
+                "com.sun.star.ui.dialogs.FilePicker", self.ctx
+            )
+            file_picker.initialize((uno.getConstantByName("com.sun.star.ui.dialogs.TemplateDescription.FILESAVE_SIMPLE"),))
+            file_picker.appendFilter("JSON File (*.json)", "*.json")
+            file_picker.appendFilter("Markdown File (*.md)", "*.md")
+            file_picker.appendFilter("YAML File (*.yaml)", "*.yaml")
+            file_picker.setDefaultName("librethinker_prompts.json")
+
+            if file_picker.execute() == 1:
+                selected_files = file_picker.getFiles()
+                if selected_files:
+                    system_path = uno.fileUrlToSystemPath(selected_files[0])
+                    count = self.prompt_manager.export_prompts(system_path)
+                    self.messageBox(f"Successfully exported {count} prompts.", "Export Complete", INFOBOX)
+        except Exception as e:
+            self.messageBox(f"Export failed: {str(e)}", "Error", ERRORBOX)
+
+    def _show_format_guide(self):
+        guide_text = (
+            "Supported Import Formats:\n\n"
+            "JSON (.json): Standard dictionary format.\n"
+            "  {\"Name\": \"Prompt text...\"}\n\n"
+            "Markdown (.md): Header followed by rule.\n"
+            "  # Prompt Name\n"
+            "  Prompt text...\n"
+            "  ---\n\n"
+            "YAML (.yaml): Key with block scalar.\n"
+            "  \"Prompt Name\":\n"
+            "    | \n"
+            "      Prompt text..."
+        )
+        self.messageBox(guide_text, "Format Guide", INFOBOX)
+
     def SavePrompt_OnClick(self):
         """Saves or updates the prompt using the auto-naming fallback."""
         try:
-            name = self.DialogContainer.getControl("PromptName").getText()
+            name = self.DialogContainer.getControl("PromptNameCombo").getText()
             prompt = self.DialogContainer.getControl("Prompt").getText()
             
             final_name = self.prompt_manager.save_prompt(name, prompt)
             
             # Update the UI to reflect the actual saved name (in case fallback was used)
-            self.DialogContainer.getControl("PromptName").setText(final_name)
             self._refresh_prompt_dropdown()
-            self.DialogContainer.getControl("PromptDropdown").setText(final_name)
+            self.DialogContainer.getControl("PromptNameCombo").setText(final_name)
             
             self.StatusText.Label = "Prompt saved."
         except Exception as e:
