@@ -10,7 +10,7 @@ You can use a free online LLM (no signup required), self-hosted Ollama, or bring
 
 ## Quickstart
 
-Download the latest extension file (.oxt) from the [releases page](https://github.com/mihailthebuilder/librethinker-extension/releases/). Open LibreOffice Writer, go to *Tools > Extension Manager > Add*, and select the downloaded .oxt file to install.
+Download the latest extension file (.oxt) from the [releases page](https://github.com/denniskhong/librethinker-extension/releases/). Open LibreOffice Writer, go to *Tools > Extension Manager > Add*, and select the downloaded .oxt file to install.
 
 Open the sidebar in LibreOffice; you should see the lightbulb icon for the extension. Click the icon to open the extension panel, then you're ready to start using the free model!
 
@@ -44,9 +44,9 @@ also routes to the self-hosted path, but is deprecated; prefer `sh/`.
 
 For LM Studio, that URL is `http://127.0.0.1:1234/v1/chat/completions` (not its native `/api/v1/chat`).
 
-## Buy me a coffee
+## Buy Mihail Marian a coffee
 
-You can leave a tip at https://ko-fi.com/mihailmarian to support my work.
+You can leave a tip at https://ko-fi.com/mihailmarian to support Mihail's work.
 
 ## License
 
