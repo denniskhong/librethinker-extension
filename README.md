@@ -54,4 +54,4 @@ See [license.txt](./extension/registration/license.txt) for license.
 
 ## More info
 
-Check out the project's site [librethinker.com](https://librethinker.com)
+Check out the original project's site [librethinker.com](https://librethinker.com)
