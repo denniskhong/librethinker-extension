@@ -11,7 +11,7 @@
 	
 			<node oor:name="LibreThinker" oor:op="replace">
 	    	    <prop oor:name="Title" oor:type="xs:string">
-            	   	<value xml:lang="en-US">LibreThinker (denniskhong Edition)</value>
+            	   	<value xml:lang="en-US">LibreThinker (DK Edition)</value>
 	            </prop>
 	            <prop oor:name="TitleBarIsOptional" oor:type="xs:boolean">
 			        <value>true</value>

@@ -21,7 +21,7 @@ Tip: When edited open file in browser to check for errors.
     -->
     <identifier value="org.librethinker.LibreThinkerExtension.denniskhong" />
 
-    <version value="0.2.16-denniskhong.2" />
+    <version value="0.2.16-dk.3" />
 
     <platform value="all" />
 
@@ -62,7 +62,7 @@ Tip: When edited open file in browser to check for errors.
     -->
 
     <display-name>
-        <name lang="en">LibreThinker (denniskhong edition)</name>
+        <name lang="en">LibreThinker (DK Edition)</name>
     </display-name>
 
     <!--

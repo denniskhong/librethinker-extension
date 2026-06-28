@@ -55,7 +55,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
         self.DialogModel.PositionX = "204"
         self.DialogModel.PositionY = "117"
         self.DialogModel.Width = 156
-        self.DialogModel.Height = 580
+        self.DialogModel.Height = 620
         self.DialogModel.Closeable = True
         self.DialogModel.Moveable = True
 
@@ -73,25 +73,26 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
         COLOR_BUTTON_DELETE = 0xFFE0E0      # Light red
         COLOR_BUTTON_SETTINGS = 0xFFF8E1    # Light yellow
 
-        # --------- NEW: Prompt Selection Dropdown ---------
-        self.PromptDropdown = self.DialogModel.createInstance("com.sun.star.awt.UnoControlComboBoxModel")
-        self.PromptDropdown.Dropdown = True
-        self.PromptDropdown.Name = "PromptDropdown"
-        self.PromptDropdown.PositionX = dialogLeftPadding
-        self.PromptDropdown.PositionY = 8
-        self.PromptDropdown.Width = 136
-        self.PromptDropdown.Height = 15
-        self.PromptDropdown.Text = "Select a saved prompt..."
-        self.DialogModel.insertByName("PromptDropdown", self.PromptDropdown)
-        
-        # Add item listener to detect dropdown selection
-        self.DialogContainer.getControl("PromptDropdown").addItemListener(self)
+        # --------- Combined Prompt Name & Dropdown ---------
+        self.PromptNameCombo = self.DialogModel.createInstance("com.sun.star.awt.UnoControlComboBoxModel")
+        self.PromptNameCombo.Dropdown = True
+        self.PromptNameCombo.Name = "PromptNameCombo"
+        self.PromptNameCombo.PositionX = dialogLeftPadding
+        self.PromptNameCombo.PositionY = 8
+        self.PromptNameCombo.Width = 136
+        self.PromptNameCombo.Height = 15
+        self.PromptNameCombo.Text = PROMPT_NAME_PLACEHOLDER
+        self.DialogModel.insertByName("PromptNameCombo", self.PromptNameCombo)
+
+        # Listen for dropdown selections AND focus changes (to clear the placeholder)
+        self.DialogContainer.getControl("PromptNameCombo").addItemListener(self)
+        self.DialogContainer.getControl("PromptNameCombo").addFocusListener(self)
 
         # --------- Prompt Management Buttons ---------
         self.NewPrompt = self.DialogModel.createInstance("com.sun.star.awt.UnoControlButtonModel")
         self.NewPrompt.Name = "NewPrompt"
         self.NewPrompt.PositionX = dialogLeftPadding
-        self.NewPrompt.PositionY = self.PromptDropdown.PositionY + 20
+        self.NewPrompt.PositionY = self.PromptNameCombo.PositionY + 20
         self.NewPrompt.Width = SMALL_BUTTON_WIDTH
         self.NewPrompt.Height = BUTTON_HEIGHT
         self.NewPrompt.BackgroundColor = COLOR_BUTTON_PRIMARY
@@ -124,17 +125,6 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
         self.DialogContainer.getControl("DeletePrompt").addActionListener(self)
         self.DialogContainer.getControl("DeletePrompt").setActionCommand("DeletePrompt_OnClick")
 
-        # --------- Prompt Name Field ---------
-        self.PromptName = self.DialogModel.createInstance("com.sun.star.awt.UnoControlEditModel")
-        self.PromptName.Name = "PromptName"
-        self.PromptName.PositionX = dialogLeftPadding
-        self.PromptName.PositionY = self.NewPrompt.PositionY + 24
-        self.PromptName.Width = 136
-        self.PromptName.Height = 15
-        self.PromptName.Text = PROMPT_NAME_PLACEHOLDER
-        self.DialogModel.insertByName("PromptName", self.PromptName)
-        self.DialogContainer.getControl("PromptName").addFocusListener(self)
-
         # --------- create an instance of Edit control, set properties ---
         self.Prompt = self.DialogModel.createInstance(
             "com.sun.star.awt.UnoControlEditModel"
@@ -143,7 +133,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
         self.Prompt.Name = "Prompt"
         self.Prompt.TabIndex = 0
         self.Prompt.PositionX = dialogLeftPadding
-        self.Prompt.PositionY = self.PromptName.PositionY + 20
+        self.Prompt.PositionY = self.NewPrompt.PositionY + 24
         self.Prompt.Width = 136
         self.Prompt.Height = 50
         self.Prompt.Text = PROMPT_PLACEHOLDER
@@ -238,61 +228,61 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
 
         self.DialogModel.insertByName("StatusText", self.StatusText)
 
-        self.LinksSectionHeading = self.DialogModel.createInstance(
-            "com.sun.star.awt.UnoControlFixedTextModel"
-        )
+        self.LinksSectionHeading = self.DialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
         self.LinksSectionHeading.Name = "LinksSectionHeading"
         self.LinksSectionHeading.PositionX = dialogLeftPadding
         self.LinksSectionHeading.PositionY = self.StatusText.PositionY + 30
         self.LinksSectionHeading.Width = 136
         self.LinksSectionHeading.Height = 10
         self.LinksSectionHeading.Label = "Links"
-
         self.DialogModel.insertByName("LinksSectionHeading", self.LinksSectionHeading)
 
-        self.GetHelp = self.DialogModel.createInstance(
-            "com.sun.star.awt.UnoControlFixedHyperlinkModel"
-        )
+        # 1. Import/Export Prompts (A button disguised as a text link)
+        self.ImportExportPrompts = self.DialogModel.createInstance("com.sun.star.awt.UnoControlButtonModel")
+        self.ImportExportPrompts.Name = "ImportExportPrompts"
+        self.ImportExportPrompts.PositionX = dialogLeftPadding
+        self.ImportExportPrompts.PositionY = self.LinksSectionHeading.PositionY + 12
+        self.ImportExportPrompts.Width = 136
+        self.ImportExportPrompts.Height = 14
+        self.ImportExportPrompts.Label = "• Import/Export Prompts"
+        self.ImportExportPrompts.Align = 0 # Left align
+        self.DialogModel.insertByName("ImportExportPrompts", self.ImportExportPrompts)
+        self.DialogContainer.getControl("ImportExportPrompts").addActionListener(self)
+        self.DialogContainer.getControl("ImportExportPrompts").setActionCommand("ImportExportPrompts_OnClick")
+
+        # 2. Get Help
+        self.GetHelp = self.DialogModel.createInstance("com.sun.star.awt.UnoControlFixedHyperlinkModel")
         self.GetHelp.Name = "GetHelp"
         self.GetHelp.Enabled = True
         self.GetHelp.PositionX = dialogLeftPadding
-        self.GetHelp.PositionY = self.LinksSectionHeading.PositionY + 15
-        self.GetHelp.TabIndex = self.SavePrompt.TabIndex + 1
-        self.GetHelp.Width = 30
+        self.GetHelp.PositionY = self.ImportExportPrompts.PositionY + 16
+        self.GetHelp.Width = 136
         self.GetHelp.Height = 10
-        self.GetHelp.Label = "Get Help"
+        self.GetHelp.Label = "• Get Help"
         self.GetHelp.URL = "https://github.com/denniskhong/librethinker-extension"
-
         self.DialogModel.insertByName("GetHelp", self.GetHelp)
 
-        self.BuyMeCoffee = self.DialogModel.createInstance(
-            "com.sun.star.awt.UnoControlFixedHyperlinkModel"
-        )
+        # 3. Buy Mihail Marian A Coffee
+        self.BuyMeCoffee = self.DialogModel.createInstance("com.sun.star.awt.UnoControlFixedHyperlinkModel")
         self.BuyMeCoffee.Name = "BuyMeCoffee"
         self.BuyMeCoffee.Enabled = True
-        self.BuyMeCoffee.PositionX = dialogLeftPadding + 30
-        self.BuyMeCoffee.PositionY = self.LinksSectionHeading.PositionY + 15
-        self.BuyMeCoffee.TabIndex = self.GetHelp.TabIndex + 1
+        self.BuyMeCoffee.PositionX = dialogLeftPadding
+        self.BuyMeCoffee.PositionY = self.GetHelp.PositionY + 12
         self.BuyMeCoffee.Width = 136
         self.BuyMeCoffee.Height = 10
-        self.BuyMeCoffee.Label = "Buy Me A Coffee (Mihail Marian)"
+        self.BuyMeCoffee.Label = "• Buy Mihail Marian A Coffee"
         self.BuyMeCoffee.URL = "https://ko-fi.com/mihailmarian"
-
         self.DialogModel.insertByName("BuyMeCoffee", self.BuyMeCoffee)
 
-        self.SettingsSectionHeading = self.DialogModel.createInstance(
-            "com.sun.star.awt.UnoControlFixedTextModel"
-        )
+        # Push the settings header down to accommodate the vertical list
+        self.SettingsSectionHeading = self.DialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
         self.SettingsSectionHeading.Name = "SettingsSectionHeading"
         self.SettingsSectionHeading.PositionX = dialogLeftPadding
-        self.SettingsSectionHeading.PositionY = self.GetHelp.PositionY + 20
+        self.SettingsSectionHeading.PositionY = self.BuyMeCoffee.PositionY + 20
         self.SettingsSectionHeading.Width = 136
         self.SettingsSectionHeading.Height = 10
         self.SettingsSectionHeading.Label = "BYOK / Ollama Settings"
-
-        self.DialogModel.insertByName(
-            "SettingsSectionHeading", self.SettingsSectionHeading
-        )
+        self.DialogModel.insertByName("SettingsSectionHeading", self.SettingsSectionHeading)
 
         # --------- NEW: Button placed FIRST, right under the Settings Heading ---
         self.GetOllamaModels = self.DialogModel.createInstance(
@@ -490,6 +480,9 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
         if oActionEvent.ActionCommand == "DeletePrompt_OnClick":
             self.DeletePrompt_OnClick()
 
+        if oActionEvent.ActionCommand == "ImportExportPrompts_OnClick":
+            self.ImportExportPrompts_OnClick()
+
     def focusGained(self, event):
         control = event.Source
         control_name = control.Model.Name
@@ -498,7 +491,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
             if control.getText() == PROMPT_PLACEHOLDER:
                 control.setText("")
 
-        elif control_name == "PromptName":
+        elif control_name == "PromptNameCombo":
             if control.getText() == PROMPT_NAME_PLACEHOLDER:
                 control.setText("")
 
@@ -510,7 +503,7 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
             if control.getText().strip() == "":
                 control.setText(PROMPT_PLACEHOLDER)
 
-        elif control_name == "PromptName":
+        elif control_name == "PromptNameCombo":
             if control.getText().strip() == "":
                 control.setText(PROMPT_NAME_PLACEHOLDER)
 
