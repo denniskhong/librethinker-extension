@@ -178,10 +178,11 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
         self.SelectedTextOption.Width = 64
         self.SelectedTextOption.Height = 10
         self.SelectedTextOption.Label = "Selected Text"
-        self.SelectedTextOption.State = True
+        self.SelectedTextOption.State = 1
 
         # inserts the control model into the dialog model
         self.DialogModel.insertByName("SelectedTextOption", self.SelectedTextOption)
+        self.DialogContainer.getControl("SelectedTextOption").addItemListener(self)
 
         # --------- create an instance of RadioButton control, set properties ---
         self.EntireDocumentOption = self.DialogModel.createInstance(
@@ -195,9 +196,11 @@ class Panel1_UI(unohelper.Base, XActionListener, XItemListener, XFocusListener, 
         self.EntireDocumentOption.Width = 64
         self.EntireDocumentOption.Height = 10
         self.EntireDocumentOption.Label = "Entire Document"
+        self.EntireDocumentOption.State = 0
 
         # inserts the control model into the dialog model
         self.DialogModel.insertByName("EntireDocumentOption", self.EntireDocumentOption)
+        self.DialogContainer.getControl("EntireDocumentOption").addItemListener(self)
 
         # --------- NEW: Model Output Textbox ---------
         self.ModelOutputBox = self.DialogModel.createInstance(

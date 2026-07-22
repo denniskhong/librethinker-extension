@@ -316,7 +316,7 @@ class Panel1(Panel1_UI):
     def server_response(
         self, inputPrompt: str, docText: str, model: str, apiKey: str
     ) -> Response:
-        extensionVersion = "0.2.16-dk.3"
+        extensionVersion = "0.2.16-dk.4"
 
         client = LtClient(extensionVersion=extensionVersion)
         answer = client.getAnswer(
@@ -377,14 +377,27 @@ class Panel1(Panel1_UI):
             dropdown.addItems(tuple(sorted_prompts), 0)
 
     def itemStateChanged(self, oItemEvent):
-        """Fires when a user selects a prompt from the dropdown."""
-        dropdown = self.DialogContainer.getControl("PromptNameCombo")
-        selected_name = dropdown.getText()
+        """Fires when a user selects a prompt from the dropdown or toggles a radio button."""
+        control = oItemEvent.Source
+        control_name = control.Model.Name
         
-        if selected_name in self.prompt_manager.prompts:
-            # Populate the main text area with the saved data
-            self.DialogContainer.getControl("Prompt").setText(self.prompt_manager.prompts[selected_name])
-            self.StatusText.Label = f"Loaded '{selected_name}'"
+        # 1. Prompt Dropdown Logic
+        if control_name == "PromptNameCombo":
+            dropdown = self.DialogContainer.getControl("PromptNameCombo")
+            selected_name = dropdown.getText()
+            
+            if selected_name in self.prompt_manager.prompts:
+                self.DialogContainer.getControl("Prompt").setText(self.prompt_manager.prompts[selected_name])
+                self.StatusText.Label = f"Loaded '{selected_name}'"
+                
+        # 2. Mutual Exclusivity Logic for Radio Buttons
+        elif control_name == "SelectedText":
+            if control.Model.State == 1:
+                self.DialogContainer.getControl("EntireDocumentOption").Model.State = 0
+                
+        elif control_name == "EntireDocument":
+            if control.Model.State == 1:
+                self.DialogContainer.getControl("SelectedTextOption").Model.State = 0
 
     def NewPrompt_OnClick(self):
         """Clears the canvas for a new entry."""
